@@ -1,0 +1,45 @@
+api:
+  monitoring:
+    interval: 3000
+  endpoints:
+    - url: "https://jsonplaceholder.typicode.com/posts/1"
+      method: GET
+      frequencyMs: 5000
+      name: "Test API"
+    - url: "https://jsonplaceholder.typicode.com/users/1"
+      method: GET
+      frequencyMs: 10000
+      name: "User API"
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5430/monitor_db}
+    username: ${SPRING_DATASOURCE_USERNAME:user}
+    password: ${SPRING_DATASOURCE_PASSWORD:thor}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# ----------------------------
+# Сервер и логирование
+# ----------------------------
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    com.apimonitor: DEBUG
+
+# ----------------------------
+# actuator
+# ----------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
