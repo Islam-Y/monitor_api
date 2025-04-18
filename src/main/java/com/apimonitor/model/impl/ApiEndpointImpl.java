@@ -14,6 +14,7 @@ public class ApiEndpointImpl implements ApiEndpoint {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    //Column
     private String url;
     private String method;
     private long frequencyMs;

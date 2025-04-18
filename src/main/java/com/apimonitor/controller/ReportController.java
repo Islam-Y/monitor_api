@@ -33,6 +33,7 @@ public class ReportController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime to
     ) {
+        //сервисный слой!!
         if (apiName == null && from == null && to == null) {
             return metricsService.findAll();
         } else {
