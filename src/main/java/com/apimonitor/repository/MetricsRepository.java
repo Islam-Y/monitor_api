@@ -10,9 +10,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface MetricsRepository extends JpaRepository<ApiMetricsImpl, Long> {
-
+//spring data jpa query method
   /**
    * Список всех уникальных apiName
+   *
    */
   @Query("SELECT DISTINCT m.apiName FROM ApiMetricsImpl m")
   List<String> findDistinctApiName();
