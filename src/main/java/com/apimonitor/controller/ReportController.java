@@ -1,6 +1,6 @@
 package com.apimonitor.controller;
 
-import com.apimonitor.model.ApiMetrics;
+import com.apimonitor.model.impl.ApiMetricsImpl;
 import com.apimonitor.service.MetricsService;
 import com.apimonitor.service.ReportService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public class ReportController {
      * GET /api/reports?apiName=User%20API&from=2025-04-01T00:00:00&to=2025-04-17T23:59:59
      */
     @GetMapping
-    public List<ApiMetrics> getMetrics(
+    public List<ApiMetricsImpl> getMetrics(
             @RequestParam(required = false) String apiName,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

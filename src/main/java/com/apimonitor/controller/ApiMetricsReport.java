@@ -1,9 +1,11 @@
 package com.apimonitor.controller;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 public class ApiMetricsReport {
     private String apiName;

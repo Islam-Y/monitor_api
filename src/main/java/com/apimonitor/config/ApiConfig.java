@@ -1,6 +1,7 @@
 package com.apimonitor.config;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -8,12 +9,14 @@ import java.util.List;
 
 @Configuration
 @ConfigurationProperties(prefix = "api")
-@Data
+@Getter
+@Setter
 public class ApiConfig {
     private List<ApiEndpoint> endpoints;
     private long monitoringInterval;
 
-    @Data
+    @Getter
+    @Setter
     public static class ApiEndpoint {
         private String url;
         private String method;

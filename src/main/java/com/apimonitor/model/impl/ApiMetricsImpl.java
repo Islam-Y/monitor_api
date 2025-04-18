@@ -2,22 +2,26 @@ package com.apimonitor.model.impl;
 
 import com.apimonitor.model.ApiMetrics;
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
 /**
- apiUrl - URL API (например, "https://api.example.com/users")
- apiName - Человекочитаемое имя из конфига
- statusCode - HTTP-статус (200, 404, 500...)
- responseTimeMs - Время ответа в миллисекундах
- timestamp - Дата и время проверки
- success - Успешен ли запрос
+ * apiUrl - URL API (например, "https://api.example.com/users")
+ * apiName - Человекочитаемое имя из конфига
+ * statusCode - HTTP-статус (200, 404, 500...)
+ * responseTimeMs - Время ответа в миллисекундах
+ * timestamp - Дата и время проверки
+ * success - Успешен ли запрос
  */
 @Entity
 @Table(name = "api_metrics")
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
 public class ApiMetricsImpl implements ApiMetrics {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

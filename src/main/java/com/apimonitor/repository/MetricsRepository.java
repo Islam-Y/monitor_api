@@ -1,6 +1,5 @@
 package com.apimonitor.repository;
 
-import com.apimonitor.model.ApiMetrics;
 import com.apimonitor.model.impl.ApiMetricsImpl;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

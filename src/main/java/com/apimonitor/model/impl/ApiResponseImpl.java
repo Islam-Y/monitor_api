@@ -2,13 +2,17 @@ package com.apimonitor.model.impl;
 
 import com.apimonitor.model.ApiResponse;
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 @Entity
 @Table(name = "api_responses")
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
 public class ApiResponseImpl implements ApiResponse {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

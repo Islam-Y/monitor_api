@@ -2,13 +2,19 @@ package com.apimonitor.model.impl;
 
 import com.apimonitor.model.ApiEndpoint;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.Map;
 
 @Entity
 @Table(name = "api_endpoints")
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
 public class ApiEndpointImpl implements ApiEndpoint {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
