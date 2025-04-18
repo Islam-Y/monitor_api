@@ -1,6 +1,5 @@
 package com.apimonitor.repository;
 
-import com.apimonitor.model.ApiMetrics;
 import com.apimonitor.model.impl.ApiMetricsImpl;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -10,16 +9,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface MetricsRepository extends JpaRepository<ApiMetricsImpl, Long> {
-//spring data jpa query method
   /**
-   * Список всех уникальных apiName
-   *
+   * Возвращает список всех уникальных названий API (apiName).
    */
   @Query("SELECT DISTINCT m.apiName FROM ApiMetricsImpl m")
   List<String> findDistinctApiName();
 
   /**
-   * Поиск метрик по apiName и диапазону timestamp
+   * Поиск метрик по имени API (apiName) и диапазону временных меток (timestamp).
+   *
+   * @param apiName имя API
+   * @param from начальная граница диапазона
+   * @param to конечная граница диапазона
+   * @return список метрик, соответствующих критериям
    */
   List<ApiMetricsImpl> findByApiNameAndTimestampBetween(
           String apiName,
@@ -28,7 +30,12 @@ public interface MetricsRepository extends JpaRepository<ApiMetricsImpl, Long> {
   );
 
   /**
-   * Общее количество запросов в диапазоне
+   * Подсчёт общего количества запросов для заданного имени API (apiName) в указанном диапазоне времени.
+   *
+   * @param apiName имя API
+   * @param from начальная граница диапазона
+   * @param to конечная граница диапазона
+   * @return количество запросов
    */
   long countByApiNameAndTimestampBetween(
           String apiName,
@@ -37,7 +44,13 @@ public interface MetricsRepository extends JpaRepository<ApiMetricsImpl, Long> {
   );
 
   /**
-   * Количество неуспешных запросов (success = false)
+   * Подсчёт количества неуспешных запросов (success = false) для заданного API (apiName)
+   * в указанном диапазоне времени.
+   *
+   * @param apiName имя API
+   * @param from начальная граница диапазона
+   * @param to конечная граница диапазона
+   * @return количество неуспешных запросов
    */
   long countByApiNameAndTimestampBetweenAndSuccessFalse(
           String apiName,
@@ -46,17 +59,26 @@ public interface MetricsRepository extends JpaRepository<ApiMetricsImpl, Long> {
   );
 
   /**
-   * Количество всех неуспешных запросов (без фильтрации по apiName)
+   * Подсчёт количества всех неуспешных запросов (success = false) без фильтрации по имени API.
+   *
+   * @return общее количество неуспешных запросов
    */
   long countBySuccessFalse();
 
   /**
-   * Среднее время ответа в миллисекундах для конкретного apiName
+   * Вычисляет среднее время ответа (responseTimeMs) для заданного API (apiName)
+   * в указанном диапазоне времени.
+   *
+   * @param apiName имя API
+   * @param from начальная граница диапазона
+   * @param to конечная граница диапазона
+   * @return среднее время ответа в миллисекундах
    */
   @Query("""
-          SELECT AVG(m.responseTimeMs) FROM ApiMetricsImpl m \
-                      WHERE m.apiName = :apiName \
-                        AND m.timestamp BETWEEN :from AND :to""")
+            SELECT AVG(m.responseTimeMs) FROM ApiMetricsImpl m\s
+            WHERE m.apiName = :apiName\s
+              AND m.timestamp BETWEEN :from AND :to
+           \s""")
   Double findAverageResponseTime(
           @Param("apiName") String apiName,
           @Param("from") LocalDateTime from,
@@ -64,7 +86,9 @@ public interface MetricsRepository extends JpaRepository<ApiMetricsImpl, Long> {
   );
 
   /**
-   * Среднее время ответа в миллисекундах по всем записям
+   * Вычисляет среднее время ответа (responseTimeMs) для всех запросов без фильтрации.
+   *
+   * @return среднее время ответа в миллисекундах
    */
   @Query("SELECT AVG(m.responseTimeMs) FROM ApiMetricsImpl m")
   Double findOverallAverageResponseTime();

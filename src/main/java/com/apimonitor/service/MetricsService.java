@@ -1,6 +1,6 @@
 package com.apimonitor.service;
 
-import com.apimonitor.controller.ApiMetricsReport;
+import com.apimonitor.dto.ApiMetricsReport;
 import com.apimonitor.model.impl.ApiMetricsImpl;
 
 import java.time.LocalDateTime;
