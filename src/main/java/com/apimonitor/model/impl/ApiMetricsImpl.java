@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 @Builder
 @EqualsAndHashCode(of = "id")
 @ToString(exclude = "response")
+
 public class ApiMetricsImpl implements ApiMetrics {
 
     /**

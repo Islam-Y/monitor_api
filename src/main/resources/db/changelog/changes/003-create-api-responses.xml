@@ -1,0 +1,21 @@
+<changeSet id="003" author="user">
+    <!-- Создание таблицы для api_responses -->
+    <createTable tableName="api_responses">
+        <column name="id" type="BIGINT" autoIncrement="true">
+            <constraints primaryKey="true" nullable="false"/>
+        </column>
+        <column name="body" type="TEXT">
+            <constraints nullable="true"/>
+        </column>
+
+        <!-- Обратная ссылка на таблицу api_metrics через response_id -->
+        <column name="metrics_id" type="BIGINT"/>
+    </createTable>
+
+    <!-- Внешний ключ, связывающий таблицу api_responses с api_metrics -->
+    <addForeignKeyConstraint baseColumnNames="metrics_id"
+                             baseTableName="api_responses"
+                             referencedTableName="api_metrics"
+                             referencedColumnNames="id"
+                             constraintName="fk_responses_metrics"/>
+</changeSet>

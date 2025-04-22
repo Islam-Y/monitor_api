@@ -1,0 +1,22 @@
+<changeSet id="001" author="user">
+    <createTable tableName="api_endpoints">
+        <column name="id" type="BIGINT" autoIncrement="true">
+            <constraints primaryKey="true" nullable="false"/>
+        </column>
+        <column name="url" type="VARCHAR(255)">
+            <constraints nullable="false"/>
+        </column>
+        <column name="method" type="VARCHAR(10)">
+            <constraints nullable="false"/>
+        </column>
+        <column name="frequency_ms" type="BIGINT">
+            <constraints nullable="false"/>
+        </column>
+        <column name="name" type="VARCHAR(255)">
+            <constraints nullable="false" unique="true"/>
+        </column>
+    </createTable>
+
+    <!-- Добавление уникального ограничения на сочетание url и method -->
+    <addUniqueConstraint columnNames="url,method" tableName="api_endpoints" constraintName="uk_api_endpoints_url_method"/>
+</changeSet>
