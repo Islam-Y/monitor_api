@@ -17,8 +17,8 @@ import java.util.Map;
                 @UniqueConstraint(columnNames = {"name"})
         }
 )
-//@Getter
-//@Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
 @ToString(exclude = "headers")
@@ -59,67 +59,9 @@ public class ApiEndpointImpl implements ApiEndpoint {
      * Заголовки, которые надо отправлять вместе с запросами на эндпоинт.
      */
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "api_endpoint_headers",
+    @CollectionTable(name = "api_headers",
             joinColumns = @JoinColumn(name = "endpoint_id"))
     @MapKeyColumn(name = "header_name")
     @Column(name = "header_value")
     private Map<String, String> headers;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    @Override
-    public String getUrl() {
-        return url;
-    }
-
-    @Override
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    @Override
-    public String getMethod() {
-        return method;
-    }
-
-    @Override
-    public void setMethod(String method) {
-        this.method = method;
-    }
-
-    @Override
-    public long getFrequencyMs() {
-        return frequencyMs;
-    }
-
-    @Override
-    public void setFrequencyMs(long frequencyMs) {
-        this.frequencyMs = frequencyMs;
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public Map<String, String> getHeaders() {
-        return headers;
-    }
-
-    @Override
-    public void setHeaders(Map<String, String> headers) {
-        this.headers = headers;
-    }
 }

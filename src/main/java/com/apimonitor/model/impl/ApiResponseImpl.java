@@ -4,14 +4,17 @@ import com.apimonitor.model.ApiResponse;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Сущность, представляющая тело ответа API, связанное с метрикой.
  * Хранит тело HTTP-ответа в виде строки.
  */
 @Entity
 @Table(name = "api_responses")
-//@Getter
-//@Setter
+@Getter
+@Setter
 @EqualsAndHashCode(of = "id")
 @ToString(exclude = "metrics")
 @NoArgsConstructor
@@ -39,34 +42,21 @@ public class ApiResponseImpl implements ApiResponse {
     @OneToOne(mappedBy = "response", fetch = FetchType.LAZY)
     private ApiMetricsImpl metrics;
 
-    @Override
-    public Long getId() {
-        return id;
-    }
+    /**
+     * Заголовки ответа.
+     */
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "api_headers",
+            joinColumns = @JoinColumn(name = "response_id")
+    )
+    @MapKeyColumn(name = "header_name")
+    @Column(name = "header_value")
+    private Map<String, String> headers = new HashMap<>();
 
-    @Override
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    @Override
-    public String getBody() {
-        return body;
-    }
-
-    @Override
-    public void setBody(String body) {
-        this.body = body;
-    }
-
-    @Override
-    public ApiMetricsImpl getMetrics() {
-        return metrics;
-    }
-
-    @Override
-    public void setMetrics(ApiMetricsImpl metrics) {
-        this.metrics = metrics;
+    public ApiResponseImpl headers(Map<String, String> headers) {
+        this.headers = headers;
+        return this;
     }
 }
 

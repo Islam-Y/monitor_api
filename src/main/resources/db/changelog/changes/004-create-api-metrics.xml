@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <databaseChangeLog
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="
-          http://www.liquibase.org/xml/ns/dbchangelog
-          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+      http://www.liquibase.org/xml/ns/dbchangelog
+      https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
-    <changeSet id="004" author="user">
-        <!-- Создание таблицы для api_metrics -->
+    <changeSet id="004" author="migration">
         <createTable tableName="api_metrics">
             <column name="id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -38,28 +36,27 @@
             <column name="response_id" type="BIGINT"/>
         </createTable>
 
+        <!-- FKs -->
         <addForeignKeyConstraint
                 baseTableName="api_metrics"
                 baseColumnNames="endpoint_id"
                 referencedTableName="api_endpoints"
                 referencedColumnNames="id"
-                constraintName="fk_metrics_endpoint"/>
-
+                constraintName="fk_metrics_endpoint"
+                onDelete="CASCADE"/>
         <addForeignKeyConstraint
                 baseTableName="api_metrics"
                 baseColumnNames="response_id"
                 referencedTableName="api_responses"
                 referencedColumnNames="id"
-                constraintName="fk_metrics_response"/>
+                constraintName="fk_metrics_response"
+                onDelete="CASCADE"/>
 
-        <createIndex
-                tableName="api_metrics"
-                indexName="idx_api_metrics_endpoint">
+        <!-- Индексы -->
+        <createIndex tableName="api_metrics" indexName="idx_api_metrics_endpoint">
             <column name="endpoint_id"/>
         </createIndex>
-        <createIndex
-                tableName="api_metrics"
-                indexName="idx_api_metrics_timestamp">
+        <createIndex tableName="api_metrics" indexName="idx_api_metrics_timestamp">
             <column name="timestamp"/>
         </createIndex>
     </changeSet>

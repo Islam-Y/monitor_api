@@ -1,6 +1,7 @@
 package com.apimonitor.model.impl;
 
 import com.apimonitor.model.ApiMetrics;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -10,6 +11,8 @@ import java.time.LocalDateTime;
 /**
  * JPA-сущность для хранения собранных метрик по запросам к API.
  * Реализует интерфейс {@link ApiMetrics}.
+ * <p>
+ * Аннотируется для игнорирования ленивых связей при JSON-сериализации.
  */
 @Entity
 @Table(name = "api_metrics",
@@ -18,8 +21,8 @@ import java.time.LocalDateTime;
                 @Index(name = "idx_api_metrics_timestamp", columnList = "timestamp")
         }
 )
-//@Getter
-//@Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -37,7 +40,9 @@ public class ApiMetricsImpl implements ApiMetrics {
 
     /**
      * Ссылка на конфигурацию эндпоинта, к которому относятся эти метрики.
+     * Ленивая связь игнорируется при JSON-сериализации.
      */
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "endpoint_id", nullable = false)
     private ApiEndpointImpl endpoint;
@@ -88,105 +93,8 @@ public class ApiMetricsImpl implements ApiMetrics {
     /**
      * Ассоциированный детальный объект ответа (например, заголовки, тело и т.д.).
      */
+    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "response_id")
     private ApiResponseImpl response;
-
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public ApiEndpointImpl getEndpoint() {
-        return endpoint;
-    }
-
-    public void setEndpoint(ApiEndpointImpl endpoint) {
-        this.endpoint = endpoint;
-    }
-
-    @Override
-    public String getApiUrl() {
-        return apiUrl;
-    }
-
-    @Override
-    public void setApiUrl(String apiUrl) {
-        this.apiUrl = apiUrl;
-    }
-
-    @Override
-    public String getApiName() {
-        return apiName;
-    }
-
-    @Override
-    public void setApiName(String apiName) {
-        this.apiName = apiName;
-    }
-
-    @Override
-    public int getStatusCode() {
-        return statusCode;
-    }
-
-    @Override
-    public void setStatusCode(int statusCode) {
-        this.statusCode = statusCode;
-    }
-
-    @Override
-    public long getResponseTimeMs() {
-        return responseTimeMs;
-    }
-
-    @Override
-    public void setResponseTimeMs(long responseTimeMs) {
-        this.responseTimeMs = responseTimeMs;
-    }
-
-    @Override
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    @Override
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    @Override
-    public boolean isSuccess() {
-        return success;
-    }
-
-    @Override
-    public void setSuccess(boolean success) {
-        this.success = success;
-    }
-
-    @Override
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
-    @Override
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
-
-    @Override
-    public ApiResponseImpl getResponse() {
-        return response;
-    }
-
-    @Override
-    public void setResponse(ApiResponseImpl response) {
-        this.response = response;
-    }
 }

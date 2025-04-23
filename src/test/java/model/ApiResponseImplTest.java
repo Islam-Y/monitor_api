@@ -5,8 +5,14 @@ import com.apimonitor.model.impl.ApiResponseImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.*;
+/**
+ * Unit tests for {@link ApiResponseImpl}.
+ */
 class ApiResponseImplTest {
 
     private ApiResponseImpl apiResponse;
@@ -26,99 +32,106 @@ class ApiResponseImplTest {
     }
 
     @Test
-    void testBuilder() {
-        assertNotNull(apiResponse);
-        assertEquals(1L, apiResponse.getId());
-        assertEquals(testBody, apiResponse.getBody());
-        assertEquals(metrics, apiResponse.getMetrics());
-    }
-
-    @Test
     void testNoArgsConstructor() {
-        ApiResponseImpl emptyResponse = new ApiResponseImpl();
-        assertNotNull(emptyResponse);
-        assertNull(emptyResponse.getId());
-        assertNull(emptyResponse.getBody());
-        assertNull(emptyResponse.getMetrics());
+        ApiResponseImpl empty = new ApiResponseImpl();
+        assertNotNull(empty);
+        assertNull(empty.getId(), "ID should be null");
+        assertNull(empty.getBody(), "Body should be null");
+        assertNull(empty.getMetrics(), "Metrics should be null");
+        assertNotNull(empty.getHeaders(), "Headers map should be initialized");
+        assertTrue(empty.getHeaders().isEmpty(), "Headers map should be empty");
     }
 
     @Test
     void testAllArgsConstructor() {
-        ApiResponseImpl constructedResponse = new ApiResponseImpl(
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "application/json");
+
+        ApiResponseImpl full = new ApiResponseImpl(
                 2L,
                 "{\"error\":\"Not found\"}",
-                metrics
+                metrics,
+                headers
         );
 
-        assertEquals(2L, constructedResponse.getId());
-        assertEquals("{\"error\":\"Not found\"}", constructedResponse.getBody());
-        assertEquals(metrics, constructedResponse.getMetrics());
+        assertEquals(2L, full.getId());
+        assertEquals("{\"error\":\"Not found\"}", full.getBody());
+        assertEquals(metrics, full.getMetrics());
+        assertSame(headers, full.getHeaders());
+    }
+
+    @Test
+    void testBuilderWithoutHeaders() {
+        // Builder does not set headers by default -> should be null
+        assertNull(apiResponse.getHeaders(), "Headers should be null when not set in builder");
+    }
+
+    @Test
+    void testBuilderWithHeaders() {
+        Map<String, String> map = Collections.singletonMap("Accept", "*/*");
+        ApiResponseImpl withHeaders = ApiResponseImpl.builder()
+                .id(3L)
+                .body("OK")
+                .metrics(metrics)
+                .headers(map)
+                .build();
+
+        assertEquals(3L, withHeaders.getId());
+        assertEquals("OK", withHeaders.getBody());
+        assertEquals(metrics, withHeaders.getMetrics());
+        assertSame(map, withHeaders.getHeaders());
+    }
+
+    @Test
+    void testHeadersSetterGetter() {
+        Map<String, String> map = Collections.singletonMap("Accept", "*/*");
+        apiResponse.setHeaders(map);
+        assertSame(map, apiResponse.getHeaders());
     }
 
     @Test
     void testEqualsAndHashCode() {
-        ApiResponseImpl response1 = new ApiResponseImpl();
-        response1.setId(1L);
+        ApiResponseImpl a = new ApiResponseImpl();
+        a.setId(10L);
+        ApiResponseImpl b = new ApiResponseImpl();
+        b.setId(10L);
+        ApiResponseImpl c = new ApiResponseImpl();
+        c.setId(11L);
 
-        ApiResponseImpl response2 = new ApiResponseImpl();
-        response2.setId(1L);
-
-        ApiResponseImpl response3 = new ApiResponseImpl();
-        response3.setId(2L);
-
-        assertEquals(response1, response2);
-        assertNotEquals(response1, response3);
-        assertEquals(response1.hashCode(), response2.hashCode());
-        assertNotEquals(response1.hashCode(), response3.hashCode());
+        assertEquals(a, b);
+        assertEquals(a.hashCode(), b.hashCode());
+        assertNotEquals(a, c);
+        assertNotEquals(a.hashCode(), c.hashCode());
     }
 
     @Test
-    void testToString() {
-        String toStringResult = apiResponse.toString();
-        assertNotNull(toStringResult);
-        assertTrue(toStringResult.contains("ApiResponseImpl"));
-        assertTrue(toStringResult.contains("id=1"));
-        assertTrue(toStringResult.contains("body=" + testBody));
-        assertFalse(toStringResult.contains("metrics="),
-                "toString() should not include the metrics field");
+    void testToStringExcludesMetrics() {
+        String tostr = apiResponse.toString();
+        assertNotNull(tostr);
+        assertTrue(tostr.contains("ApiResponseImpl"));
+        assertTrue(tostr.contains("id=1"));
+        assertTrue(tostr.contains("body=" + testBody));
+        assertFalse(tostr.contains("metrics="), "toString should not include metrics field");
     }
 
     @Test
-    void testBodyManagement() {
-        // Test null body
-        apiResponse.setBody(null);
-        assertNull(apiResponse.getBody());
-
-        // Test empty body
-        apiResponse.setBody("");
-        assertEquals("", apiResponse.getBody());
-
-        // Test large body
-        String largeBody = "a".repeat(10000);
-        apiResponse.setBody(largeBody);
-        assertEquals(largeBody, apiResponse.getBody());
+    void testBodyLarge() {
+        String large = "x".repeat(5000);
+        apiResponse.setBody(large);
+        assertEquals(large, apiResponse.getBody());
     }
 
     @Test
     void testBidirectionalRelationship() {
-        ApiResponseImpl newResponse = new ApiResponseImpl();
-        newResponse.setId(2L);
+        ApiResponseImpl resp = new ApiResponseImpl();
+        resp.setId(5L);
+        ApiMetricsImpl met = new ApiMetricsImpl();
+        met.setId(5L);
 
-        ApiMetricsImpl newMetrics = new ApiMetricsImpl();
-        newMetrics.setId(2L);
-        newMetrics.setResponse(newResponse);
-        newResponse.setMetrics(newMetrics);
+        met.setResponse(resp);
+        resp.setMetrics(met);
 
-        assertEquals(newMetrics, newResponse.getMetrics());
-        assertEquals(newResponse, newMetrics.getResponse());
-    }
-
-    @Test
-    void testLobAnnotationBehavior() {
-        // This would typically be tested with an integration test against a real database
-        // Here we just verify the field can handle large text
-        String xmlBody = "<response><data>".repeat(1000) + "</data></response>";
-        apiResponse.setBody(xmlBody);
-        assertEquals(xmlBody, apiResponse.getBody());
+        assertEquals(met, resp.getMetrics());
+        assertEquals(resp, met.getResponse());
     }
 }

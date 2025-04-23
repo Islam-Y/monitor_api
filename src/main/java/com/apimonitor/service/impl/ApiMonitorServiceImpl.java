@@ -1,59 +1,74 @@
 package com.apimonitor.service.impl;
 
+import com.apimonitor.config.ApiConfig;
 import com.apimonitor.dto.ApiMetricsReport;
 import com.apimonitor.dto.ApiMetricsSummary;
 import com.apimonitor.mapper.ApiMetricsMapper;
 import com.apimonitor.model.impl.ApiEndpointImpl;
 import com.apimonitor.model.impl.ApiMetricsImpl;
+import com.apimonitor.model.impl.ApiResponseImpl;
 import com.apimonitor.repository.ApiEndpointRepository;
 import com.apimonitor.repository.MetricsRepository;
 import com.apimonitor.service.ApiMonitorService;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.*;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Сервис для мониторинга API-эндпоинтов и получения отчетов по метрикам.
+ * <p>
+ * При сохранении метрик, каждый ApiMetricsImpl получает ссылку на сущность ApiEndpointImpl,
+ * загруженную или созданную на основании настроек из ApiConfig.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ApiMonitorServiceImpl implements ApiMonitorService {
+
     private final RestTemplate restTemplate;
     private final MetricsRepository metricsRepository;
     private final ApiEndpointRepository endpointRepository;
     private final ApiMetricsMapper metricsMapper;
+    private final ApiConfig apiConfig;
 
     /**
-     * Запускается по расписанию каждые 30 секунд (можно вынести в конфиг).
+     * Запускает мониторинг всех эндпоинтов из конфигурации.
      */
-    @Scheduled(fixedDelayString = "${monitor.fixedDelayMs:30000}")
+    @Override
+    @Transactional
+    @Scheduled(fixedDelayString = "${api.monitoring.interval:5000}")
     public void monitorAllEndpoints() {
-        endpointRepository.findAll()
-                .forEach(this::monitorSingleEndpoint);
+        List<ApiConfig.ApiEndpoint> endpoints = apiConfig.getEndpoints();
+        log.info("Запуск мониторинга по конфигу: {} эндпоинтов", endpoints.size());
+        endpoints.forEach(this::monitorSingleConfigEndpoint);
+        log.info("Мониторинг завершен");
     }
 
     /**
-     * Выполняет один запрос к заданному эндпоинту и сохраняет результаты в БД.
-     *
-     * @param endpoint сущность эндпоинта для мониторинга
+     * Выполняет запрос к одному эндпоинту конфигурации и сохраняет метрику.
+     * Устанавливает связь с ApiEndpointImpl из БД.
      */
     @Transactional
-    public void monitorSingleEndpoint(ApiEndpointImpl endpoint) {
-        long startTime = System.currentTimeMillis();
-        HttpHeaders headers = new HttpHeaders();
-        if (endpoint.getHeaders() != null) {
-            endpoint.getHeaders().forEach(headers::add);
-        }
-        HttpEntity<Void> entity = new HttpEntity<>(null, headers);
+    public void monitorSingleConfigEndpoint(ApiConfig.ApiEndpoint conf) {
+        ApiEndpointImpl endpoint = findOrCreateEndpoint(conf);
+        ApiResponseImpl response;
 
+        long start = System.currentTimeMillis();
         int status;
         long responseTime;
         boolean success;
@@ -61,54 +76,75 @@ public class ApiMonitorServiceImpl implements ApiMonitorService {
 
         try {
             ResponseEntity<String> resp = restTemplate.exchange(
-                    endpoint.getUrl(),
-                    HttpMethod.valueOf(endpoint.getMethod()),
-                    entity,
-                    String.class
-            );
-            responseTime = System.currentTimeMillis() - startTime;
-            status       = resp.getStatusCode().value();
-            success      = resp.getStatusCode().is2xxSuccessful();
-            saveMetrics(endpoint, status, responseTime, success, null);
-            log.info("Monitoring success: {} ({} ms)", endpoint.getName(), responseTime);
+                    conf.getUrl(), HttpMethod.valueOf(conf.getMethod()), null, String.class);
+            responseTime = System.currentTimeMillis() - start;
+            status = resp.getStatusCode().value();
+            success = resp.getStatusCode().is2xxSuccessful();
+
+            response = ApiResponseImpl.builder()
+                    .body(resp.getBody())
+                    .headers(resp.getHeaders().toSingleValueMap())
+                    .build();
 
         } catch (HttpStatusCodeException ex) {
-            responseTime = System.currentTimeMillis() - startTime;
-            status       = ex.getStatusCode().value();
-            errorMsg     = ex.getResponseBodyAsString();
-            saveMetrics(endpoint, status, responseTime, false, errorMsg);
-            log.error("Monitoring HTTP error: {} - {}", endpoint.getName(), status);
+            responseTime = System.currentTimeMillis() - start;
+            status = ex.getStatusCode().value();
+            errorMsg = ex.getResponseBodyAsString();
+            success = false;
+
+            response = ApiResponseImpl.builder()
+                    .body(errorMsg)
+                    .headers(
+                            ex.getResponseHeaders() != null
+                                    ? ex.getResponseHeaders().toSingleValueMap()
+                                    : Collections.emptyMap()
+                    )
+                    .build();
 
         } catch (RestClientException ex) {
-            responseTime = System.currentTimeMillis() - startTime;
-            status       = HttpStatus.INTERNAL_SERVER_ERROR.value();
-            errorMsg     = ex.getMessage();
-            saveMetrics(endpoint, status, responseTime, false, errorMsg);
-            log.error("Monitoring failed: {} - {}", endpoint.getName(), errorMsg);
-        }
-    }
+            responseTime = System.currentTimeMillis() - start;
+            status = 500;
+            errorMsg = ex.getMessage();
+            success = false;
 
-    private void saveMetrics(ApiEndpointImpl endpoint,
-                             int statusCode,
-                             long responseTime,
-                             boolean success,
-                             String errorMessage) {
-        ApiMetricsImpl m = new ApiMetricsImpl();
-        m.setEndpoint(endpoint);
-        m.setApiUrl(endpoint.getUrl());
-        m.setApiName(endpoint.getName());
-        m.setStatusCode(statusCode);
-        m.setResponseTimeMs(responseTime);
-        m.setSuccess(success);
-        m.setErrorMessage(errorMessage);
+            response = ApiResponseImpl.builder()
+                    .body(errorMsg)
+                    .headers(null)
+                    .build();
+        }
+
+        ApiMetricsImpl m = ApiMetricsImpl.builder()
+                .endpoint(endpoint)
+                .apiName(conf.getName())
+                .apiUrl(conf.getUrl())
+                .statusCode(status)
+                .responseTimeMs(responseTime)
+                .success(success)
+                .errorMessage(errorMsg)
+                .response(response)
+                .build();
+
         metricsRepository.save(m);
+        log.debug("Сохранена метрика для {}: status={}, time={}ms", conf.getName(), status, responseTime);
     }
 
     /**
-     * Возвращает список всех записей метрик в виде DTO‑сводок.
-     *
-     * @return List<ApiMetricsSummary> — для каждого результата мониторинга
+     * Ищет в БД ApiEndpointImpl по уникальному имени или URL, иначе создаёт новую запись.
      */
+    private ApiEndpointImpl findOrCreateEndpoint(ApiConfig.ApiEndpoint conf) {
+        Optional<ApiEndpointImpl> opt = endpointRepository.findByName(conf.getName());
+        if (opt.isPresent()) {
+            return opt.get();
+        }
+        ApiEndpointImpl entity = new ApiEndpointImpl();
+        entity.setName(conf.getName());
+        entity.setUrl(conf.getUrl());
+        entity.setMethod(conf.getMethod());
+        entity.setFrequencyMs(conf.getFrequencyMs());
+        // headers нет в конфиге
+        return endpointRepository.save(entity);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<ApiMetricsSummary> getAllMetricsSummaries() {
@@ -117,78 +153,38 @@ public class ApiMonitorServiceImpl implements ApiMonitorService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Генерирует агрегированный отчёт по метрикам указанного эндпоинта за заданный период.
-     *
-     * @param endpointId ID эндпоинта, для которого строится отчёт
-     * @param from       начало периода (включительно)
-     * @param to         конец периода (включительно)
-     * @return {@link ApiMetricsReport} со следующими данными:
-     *         <ul>
-     *           <li>apiName — имя эндпоинта;</li>
-     *           <li>apiUrl — URL эндпоинта;</li>
-     *           <li>totalRequests — общее количество запросов;</li>
-     *           <li>errorCount — количество неуспешных запросов;</li>
-     *           <li>avgResponseMs — среднее время отклика;</li>
-     *           <li>minResponseMs — минимальное время отклика;</li>
-     *           <li>maxResponseMs — максимальное время отклика;</li>
-     *           <li>statusCodeDistribution — распределение количества ответов по статус-кодам;</li>
-     *           <li>reportStartTime, reportEndTime — границы периода;</li>
-     *           <li>headers — заголовки, с которыми выполнялся запрос.</li>
-     *         </ul>
-     * @throws EntityNotFoundException если эндпоинт с указанным ID не найден
-     */
     @Override
     @Transactional(readOnly = true)
-    public ApiMetricsReport getMetricsReport(Long endpointId,
-                                             LocalDateTime from,
-                                             LocalDateTime to) {
-        // 1. Достаём endpoint и apiName
+    public ApiMetricsReport getMetricsReport(Long endpointId, LocalDateTime from, LocalDateTime to) {
         ApiEndpointImpl endpoint = endpointRepository.findById(endpointId)
                 .orElseThrow(() -> new EntityNotFoundException("Endpoint not found: " + endpointId));
-        String apiName = endpoint.getName();
-        String apiUrl  = endpoint.getUrl();
+        List<ApiMetricsImpl> metrics = metricsRepository.findByApiNameAndTimestampBetween(
+                endpoint.getName(), from, to);
+        return metricsMapper.toReport(
+                new ReportWrapper(endpoint, metrics, from, to)
+        );
+    }
 
-        // 2. Собираем «сырые» метрики за период
-        List<ApiMetricsImpl> metrics = metricsRepository
-                .findByApiNameAndTimestampBetween(apiName, from, to);
 
-        // 3. Агрегируем:
-        long totalRequests = metrics.size();
-        long errorCount    = metrics.stream().filter(m -> !m.isSuccess()).count();
-        double avgResponseMs = metrics.stream()
-                .mapToLong(ApiMetricsImpl::getResponseTimeMs)
-                .average()
-                .orElse(0.0);
-        double minResponseMs = metrics.stream()
-                .mapToLong(ApiMetricsImpl::getResponseTimeMs)
-                .min()
-                .orElse(0L);
-        double maxResponseMs = metrics.stream()
-                .mapToLong(ApiMetricsImpl::getResponseTimeMs)
-                .max()
-                .orElse(0L);
+    /**
+     * Wrapper для передачи списка в mapper.
+     */
+    @Getter
+    private static class ReportWrapper extends ApiMetricsImpl {
+        private final List<ApiMetricsImpl> list;
+        private final LocalDateTime from;
+        private final LocalDateTime to;
 
-        Map<Integer, Long> statusCodeDistribution = metrics.stream()
-                .collect(Collectors.groupingBy(
-                        ApiMetricsImpl::getStatusCode,
-                        Collectors.counting()
-                ));
+        public ReportWrapper(ApiEndpointImpl endpoint, List<ApiMetricsImpl> list,
+                             LocalDateTime from, LocalDateTime to) {
+            super();
+            setEndpoint(endpoint);
+            setApiName(endpoint.getName());
+            setApiUrl(endpoint.getUrl());
+            this.list = list;
+            this.from = from;
+            this.to = to;
+        }
 
-        // 4. Собираем DTO через Builder
-        return ApiMetricsReport.builder()
-                .apiName(apiName)
-                .apiUrl(apiUrl)
-                .totalRequests(totalRequests)
-                .errorCount(errorCount)
-                .avgResponseMs(avgResponseMs)
-                .minResponseMs(minResponseMs)
-                .maxResponseMs(maxResponseMs)
-                .statusCodeDistribution(statusCodeDistribution)
-                .reportStartTime(from)
-                .reportEndTime(to)
-                .headers(endpoint.getHeaders())
-                .build();
     }
 }
-
