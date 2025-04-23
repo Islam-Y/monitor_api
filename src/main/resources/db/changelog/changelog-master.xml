@@ -7,7 +7,7 @@
           http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
     <include file="db/changelog/changes/001-create-api-endpoints.xml"/>
-    <include file="db/changelog/changes/002-create-api-endpoint-headers.xml"/>
-    <include file="db/changelog/changes/003-create-api-responses.xml"/>
-    <include file="db/changelog/changes/004-create-api-metrics.xml"/>
+<!--    <include file="db/changelog/changes/002-create-api-endpoint-headers.xml"/>-->
+<!--    <include file="db/changelog/changes/003-create-api-responses.xml"/>-->
+<!--    <include file="db/changelog/changes/004-create-api-metrics.xml"/>-->
 </databaseChangeLog>

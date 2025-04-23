@@ -1,21 +1,19 @@
-<changeSet id="003" author="user">
-    <!-- Создание таблицы для api_responses -->
-    <createTable tableName="api_responses">
-        <column name="id" type="BIGINT" autoIncrement="true">
-            <constraints primaryKey="true" nullable="false"/>
-        </column>
-        <column name="body" type="TEXT">
-            <constraints nullable="true"/>
-        </column>
+<?xml version="1.0" encoding="UTF-8"?>
 
-        <!-- Обратная ссылка на таблицу api_metrics через response_id -->
-        <column name="metrics_id" type="BIGINT"/>
-    </createTable>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-    <!-- Внешний ключ, связывающий таблицу api_responses с api_metrics -->
-    <addForeignKeyConstraint baseColumnNames="metrics_id"
-                             baseTableName="api_responses"
-                             referencedTableName="api_metrics"
-                             referencedColumnNames="id"
-                             constraintName="fk_responses_metrics"/>
-</changeSet>
+    <changeSet id="003" author="user">
+        <!-- Создание таблицы для api_responses -->
+        <createTable tableName="api_responses">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="body" type="TEXT"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>
