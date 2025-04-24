@@ -65,8 +65,7 @@ public class ReportController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to
-    ) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
         log.info("Запрос метрик: apiName={}, from={}, to={}", apiName, from, to);
         List<ApiMetricsImpl> list = (apiName != null && from != null && to != null)
                 ? metricsService.findByFilter(apiName, from, to)
@@ -105,8 +104,7 @@ public class ReportController {
             @RequestParam @NotNull
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam @NotNull
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to
-    ) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
         log.info("Запрос сводки: apiName={}, from={}, to={}", apiName, from, to);
         ApiMetricsSummary summary = reportService.aggregateSummary(apiName, from, to);
         return ResponseEntity.ok(summary);
@@ -140,8 +138,7 @@ public class ReportController {
             @RequestParam @NotNull
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam @NotNull
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to
-    ) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
         log.info("Запрос детального отчета: from={}, to={}", from, to);
         List<ApiMetricsReport> reports = metricsService.buildReports(from, to);
         return ResponseEntity.ok(reports);

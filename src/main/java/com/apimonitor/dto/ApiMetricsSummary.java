@@ -1,11 +1,15 @@
 package com.apimonitor.dto;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Builder;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
 
-//@Getter
-//@Setter
+@Getter
 @Builder
 @ToString
 @EqualsAndHashCode
@@ -57,60 +61,60 @@ public class ApiMetricsSummary {
         return apiName;
     }
 
-    public void setApiName(String apiName) {
-        this.apiName = apiName;
-    }
-
     public String getApiUrl() {
         return apiUrl;
-    }
-
-    public void setApiUrl(String apiUrl) {
-        this.apiUrl = apiUrl;
     }
 
     public long getTotalRequests() {
         return totalRequests;
     }
 
-    public void setTotalRequests(long totalRequests) {
-        this.totalRequests = totalRequests;
-    }
-
     public long getSuccessfulRequests() {
         return successfulRequests;
-    }
-
-    public void setSuccessfulRequests(long successfulRequests) {
-        this.successfulRequests = successfulRequests;
     }
 
     public long getFailedRequests() {
         return failedRequests;
     }
 
-    public void setFailedRequests(long failedRequests) {
-        this.failedRequests = failedRequests;
-    }
-
     public double getAvgResponseMs() {
         return avgResponseMs;
-    }
-
-    public void setAvgResponseMs(double avgResponseMs) {
-        this.avgResponseMs = avgResponseMs;
     }
 
     public LocalDateTime getSummaryGeneratedAt() {
         return summaryGeneratedAt;
     }
 
-    public void setSummaryGeneratedAt(LocalDateTime summaryGeneratedAt) {
-        this.summaryGeneratedAt = summaryGeneratedAt;
-    }
-
     public double getSuccessRate() {
         return successRate;
+    }
+
+    public void setApiName(String apiName) {
+        this.apiName = apiName;
+    }
+
+    public void setApiUrl(String apiUrl) {
+        this.apiUrl = apiUrl;
+    }
+
+    public void setTotalRequests(long totalRequests) {
+        this.totalRequests = totalRequests;
+    }
+
+    public void setSuccessfulRequests(long successfulRequests) {
+        this.successfulRequests = successfulRequests;
+    }
+
+    public void setFailedRequests(long failedRequests) {
+        this.failedRequests = failedRequests;
+    }
+
+    public void setAvgResponseMs(double avgResponseMs) {
+        this.avgResponseMs = avgResponseMs;
+    }
+
+    public void setSummaryGeneratedAt(LocalDateTime summaryGeneratedAt) {
+        this.summaryGeneratedAt = summaryGeneratedAt;
     }
 
     public void setSuccessRate(double successRate) {
