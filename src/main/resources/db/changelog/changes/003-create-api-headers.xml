@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+      http://www.liquibase.org/xml/ns/dbchangelog
+      https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="003" author="migration">
+        <createTable tableName="api_headers">
+            <!-- Суррогатный PK -->
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="endpoint_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="response_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="header_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="header_value" type="VARCHAR(2048)"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="api_headers"
+                baseColumnNames="endpoint_id"
+                referencedTableName="api_endpoints"
+                referencedColumnNames="id"
+                constraintName="fk_api_headers_endpoint"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="api_headers"
+                baseColumnNames="response_id"
+                referencedTableName="api_responses"
+                referencedColumnNames="id"
+                constraintName="fk_api_headers_response"
+                onDelete="CASCADE"/>
+
+        <!-- Индексы -->
+        <createIndex tableName="api_headers" indexName="idx_api_headers_endpoint">
+            <column name="endpoint_id"/>
+        </createIndex>
+        <createIndex tableName="api_headers" indexName="idx_api_headers_response">
+            <column name="response_id"/>
+        </createIndex>
+        <!-- Уникальный индекс на сочетание владельца and header_name -->
+        <createIndex tableName="api_headers" indexName="uk_api_headers_owner_name" unique="true">
+            <column name="endpoint_id"/>
+            <column name="response_id"/>
+            <column name="header_name"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
